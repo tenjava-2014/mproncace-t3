@@ -1,0 +1,3 @@
+name: mproncace-t3
+main: com.tenjava.entries.mproncace.t3.TenJava
+version: '${project.version}'
