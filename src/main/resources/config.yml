@@ -96,3 +96,6 @@ cleanse-block: GLOWSTONE
 
 # How much area around it should the cleansing block protect?
 cleanse-radius: 5
+
+# Set to true to enable debug messages. (this may come in handy while judging)
+debug: false
