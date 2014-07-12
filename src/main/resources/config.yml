@@ -6,4 +6,93 @@
 corruption-form-chance: 1000
 
 # What should the chance of any given corrupted block spreading to its neighbors per second?
+#  (Don't make this too low unless you want NASTY lag after a few minutes)
 corruption-spread-chance: 300
+
+# Defines which block types corruption may form on.
+allowed-form-types:
+  - DIRT
+  - GRASS
+  - STONE
+  - GRAVEL
+  - CLAY_BLOCK
+  - SAND
+  - COAL_ORE
+  - ICE
+  - SNOW_BLOCK
+  - HARD_CLAY
+  - STAINED_CLAY
+  - MYCEL
+  - PACKED_ICE
+  
+# Defines which block types corruption may spread to.
+allowed-spread-types:
+  - DIRT
+  - GRASS
+  - STONE
+  - GRAVEL
+  - CLAY_BLOCK
+  - SAND
+  - COAL_ORE
+  - ICE
+  - SNOW_BLOCK
+  - HARD_CLAY
+  - STAINED_CLAY
+  - MYCEL
+  - PACKED_ICE
+  - COBBLESTONE
+  - STONE_BRICK
+  - GOLD_ORE
+  - REDSTONE_ORE
+  - LAPIS_ORE
+  - LAPIS_BLOCK
+  - EMERALD_ORE
+  - DIAMOND_ORE
+  - IRON_BLOCK
+  - REDSTONE_BLOCK
+  - GOLD_BLOCK
+  - IRON_BLOCK
+  - DIAMOND_BLOCK
+  - HUGE_MUSHROOM_1
+  - HUGE_MUSHROOM_2
+  - WOOD
+  - LOG
+  - LOG_2
+  - WOOD_STEP
+  - WOOD_STAIRS
+  - STEP
+  - STAIRS
+  - OBSIDIAN
+  - GLASS
+  - SANDSTONE
+  - LEAVES
+  - LEAVES_2
+  - MELON_BLOCK
+  - PUMPKIN
+  - JACK_O_LANTERN
+  - WOOL
+  - FARMLAND
+  - BOOKSHELF
+  - CRAFTING_TABLE
+  - MOSS_STONE
+  - SMOOTH_BRICK
+  - SMOOTH_STAIRS
+  - GLASS_PANE
+  - STAINED_GLASS
+  - STAINED_GLASS_PANE
+  - MONSTER_EGG
+  - SANDSTONE_STAIRS
+  - SOUL_SAND
+  - NETHER_BRICK
+  - END_STONE
+  - COBWEB
+  - NETHER_BRICK_STAIRS
+
+# Which block should be used for corrupted areas?
+corrupt-block: NETHERRACK
+
+# Which block should be used to cleanse/prevent corruption?
+cleanse-block: GLOWSTONE
+
+# How much area around it should the cleansing block protect?
+cleanse-radius: 5
