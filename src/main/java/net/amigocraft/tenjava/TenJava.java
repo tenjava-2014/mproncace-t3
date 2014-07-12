@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -18,9 +19,12 @@ import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class TenJava extends JavaPlugin {
+public class TenJava extends JavaPlugin implements Listener {
 
 	public static TenJava plugin;
 	public static Logger log;
@@ -34,8 +38,9 @@ public class TenJava extends JavaPlugin {
 	public static Statement st;
 	public static ResultSet rs;
 
-	public static List<Object[]> corruptBlocks = new ArrayList<Object[]>();
-	public static List<Object[]> blockBuffer = new ArrayList<Object[]>();
+	public static HashMap<Integer[], Object[]> corruptBlocks = new HashMap<Integer[], Object[]>();
+	public static HashMap<Integer[], Object[]> blockBuffer = new HashMap<Integer[], Object[]>();
+	public static List<Integer[]> remove = new ArrayList<Integer[]>();
 
 	public void onEnable(){
 
@@ -43,6 +48,8 @@ public class TenJava extends JavaPlugin {
 		log = getLogger();
 
 		saveDefaultConfig();
+
+		Bukkit.getPluginManager().registerEvents(this, this);
 
 		CORRUPT_CHANCE = getConfig().getInt("corruption-form-chance"); // for efficiency
 		SPREAD_CHANCE = getConfig().getInt("corruption-spread-chance");
@@ -81,7 +88,8 @@ public class TenJava extends JavaPlugin {
 			rs = st.executeQuery("SELECT * FROM blocks");
 			while (rs.next()){
 				log.info("added");
-				corruptBlocks.add(new Object[]{rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("prevType"), rs.getString("prevBiome")});
+				corruptBlocks.put(new Integer[]{rs.getInt("x"), rs.getInt("y"), rs.getInt("z")},
+						new Object[]{rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("prevType"), rs.getString("prevBiome")});
 			}
 		}
 		catch (SQLException | ClassNotFoundException ex){
@@ -113,7 +121,7 @@ public class TenJava extends JavaPlugin {
 		}
 		final List<Material> corruptTypes = corruptTypes1;
 		final List<Material> spreadTypes = spreadTypes1;
-		
+
 		Bukkit.getScheduler().runTaskTimer(plugin, new Runnable(){
 			public void run(){
 				Random r = new Random(); // now I'm automatically complying to the theme (*holds up spork*)
@@ -135,8 +143,10 @@ public class TenJava extends JavaPlugin {
 								}
 							}
 							if (!protect){
-								blockBuffer.add(new Object[]{b.getX(), b.getY(), b.getZ(), b.getType().toString(), b.getBiome().toString()});
-								corruptBlocks.add(new Object[]{b.getX(), b.getY(), b.getZ(), b.getType().toString(), b.getBiome().toString()});
+								blockBuffer.put(new Integer[]{b.getX(), b.getY(), b.getZ()},
+										new Object[]{b.getX(), b.getY(), b.getZ(), b.getType().toString(), b.getBiome().toString()});
+								corruptBlocks.put(new Integer[]{b.getX(), b.getY(), b.getZ()},
+										new Object[]{b.getX(), b.getY(), b.getZ(), b.getType().toString(), b.getBiome().toString()});
 								b.setType(CORRUPT_BLOCK);
 								b.setBiome(Biome.SKY);
 								log.info("Corrupted block randomly at " + b.getX() + ", " + b.getY() + ", " + b.getZ());
@@ -145,8 +155,8 @@ public class TenJava extends JavaPlugin {
 						}
 					}
 				}
-				List<Object[]> buffer = new ArrayList<Object[]>();
-				for (Object[] ia : corruptBlocks){
+				HashMap<Integer[], Object[]> buffer = new HashMap<Integer[], Object[]>();
+				for (Object[] ia : corruptBlocks.values()){
 					if (r.nextInt(SPREAD_CHANCE) == 0){
 						Block b = Bukkit.getWorlds().get(0).getBlockAt((int)ia[0], (int)ia[1], (int)ia[2]);
 						BlockFace[] faces = new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
@@ -187,7 +197,8 @@ public class TenJava extends JavaPlugin {
 							}
 						}
 						if (bl != null){
-							buffer.add(new Object[]{bl.getX(), bl.getY(), bl.getZ(), bl.getType().toString(), bl.getBiome().toString()});
+							buffer.put(new Integer[]{bl.getX(), bl.getY(), bl.getZ()},
+									new Object[]{bl.getX(), bl.getY(), bl.getZ(), bl.getType().toString(), bl.getBiome().toString()});
 							bl.setType(CORRUPT_BLOCK);
 							b.setBiome(Biome.SKY);
 							if (DEBUG)
@@ -195,13 +206,13 @@ public class TenJava extends JavaPlugin {
 						}
 					}
 				}
-				blockBuffer.addAll(buffer);
-				corruptBlocks.addAll(buffer);
+				blockBuffer.putAll(buffer);
+				corruptBlocks.putAll(buffer);
 			}
 		}, 0L, 20L);
-		
+
 		log.info(this + " has been enabled! *holds up spork*");
-		
+
 	}
 
 	public void onDisable(){
@@ -212,10 +223,11 @@ public class TenJava extends JavaPlugin {
 				String dbPath = "jdbc:sqlite:" + getDataFolder() + File.separator + "data.db";
 				conn = DriverManager.getConnection(dbPath);
 				st = conn.createStatement();
-				for (Object[] ia : blockBuffer){
+				for (Object[] ia : blockBuffer.values())
 					st.executeUpdate("INSERT INTO `blocks` (x, y, z, prevType, prevBiome) VALUES (" + ia[0] + ", " + ia[1] + ", " + ia[2] + ", '" +
-					ia[3] + "', '" + ia[4] + "')");
-				}
+							ia[3] + "', '" + ia[4] + "')");
+				for (Integer[] ia : remove)
+					st.executeUpdate("DELETE FROM blocks WHERE x = " + ia[0] + " AND y = " + ia[1] + " AND z = " + ia[2]);
 			}
 			catch (SQLException | ClassNotFoundException ex){
 				ex.printStackTrace();
@@ -235,11 +247,36 @@ public class TenJava extends JavaPlugin {
 		rs = null;
 		st = null;
 		conn = null;
-		
+
 		log.info(this + " has been disabled! *puts down spork*");
-		
+
 		log = null;
 		plugin = null;
 	}
+
+	/*@EventHandler
+	public void onBlockPlace(BlockPlaceEvent e){
+		if (e.getBlock().getType() == CLEANSE_BLOCK)
+			for (int xx = -CLEANSE_RADIUS; xx <= CLEANSE_RADIUS; xx++)
+				for (int yy = -CLEANSE_RADIUS; yy <= CLEANSE_RADIUS; yy++)
+					for (int zz = -CLEANSE_RADIUS; zz <= CLEANSE_RADIUS; zz++)
+						restoreBlock(e.getBlock().getWorld().getBlockAt(e.getBlock().getX() + xx, e.getBlock().getY() + yy, e.getBlock().getZ() + zz));
+
+	}
+
+	public void restoreBlock(Block b){
+		log.info("restoring at " + b.getX() + ", " + b.getY() + ", " + b.getZ());
+		for (Object[] o : corruptBlocks.values()){
+			if (((int)o)[0] == b.getX() && ((int)o)[0] == b.getX() && ((int)o)[0] == b.getX())
+				
+		if (block != null){
+			log.info("good to go");
+			b.setType(Material.valueOf((String)block[3]));
+			b.setBiome(Biome.valueOf((String)block[4]));
+			corruptBlocks.remove(new Integer[]{b.getX(), b.getY(), b.getZ()});
+			remove.add(new Integer[]{b.getX(), b.getY(), b.getZ()});
+		}
+		}
+	}*/
 
 }

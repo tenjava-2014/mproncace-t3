@@ -3,11 +3,11 @@
 # ######################### #
 
 # What should the chance of a corruption spawn be per second?
-corruption-form-chance: 1000
+corruption-form-chance: 600
 
 # What should the chance of any given corrupted block spreading to its neighbors per second?
 #  (Don't make this too low unless you want NASTY lag after a few minutes)
-corruption-spread-chance: 300
+corruption-spread-chance: 60
 
 # Defines which block types corruption may form on.
 allowed-form-types:
