@@ -1,0 +1,9 @@
+# ######################### #
+# # TenJava Configuration # #
+# ######################### #
+
+# What should the chance of a corruption spawn be per second?
+corruption-form-chance: 1000
+
+# What should the chance of any given corrupted block spreading to its neighbors per second?
+corruption-spread-chance: 300
